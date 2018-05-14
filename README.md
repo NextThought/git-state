@@ -1,21 +1,21 @@
-# git-state
+# @nti/git-state
+**Forked from https://github.com/watson/git-state**
+
 
 Get the current state of any git repository.
 
-[![npm](https://img.shields.io/npm/v/git-state.svg)](https://www.npmjs.com/package/git-state)
-[![Build status](https://travis-ci.org/watson/git-state.svg?branch=master)](https://travis-ci.org/watson/git-state)
-[![js-standard-style](https://img.shields.io/badge/code%20style-standard-brightgreen.svg?style=flat)](https://github.com/feross/standard)
+[![Build status](https://travis-ci.org/NextThought/git-state.svg?branch=master)](https://travis-ci.org/NextThought/git-state)
 
 ## Installation
 
 ```
-npm install git-state --save
+npm install @nti/git-state
 ```
 
 ## Usage
 
 ```js
-var git = require('git-state')
+var git = require('@nti/git-state')
 
 var path = '/path/to/git/repo'
 
@@ -257,13 +257,13 @@ a git repository.
 
 ## Shell implementation
 
-Inside the [`bin`](https://github.com/watson/git-state/tree/master/bin)
+Inside the [`bin`](https://github.com/NextThought/git-state/tree/master/bin)
 folder is a set of shell scripts which will perform the same checks as
 the `isGit()` and `check()` functions, but just in pure bash. This
 allows you for instance to modify your command prompt without having to
 invoke node (which can be kind of slow if done at every request). In
 fact this is exactly what the
-[git-ps1](https://github.com/watson/git-ps1) module does for you.
+[git-ps1](https://github.com/NextThought/git-ps1) module does for you.
 
 - `bin/isgit` - exit code will be 0 if cwd is inside a git repo,
   otherwise 1
