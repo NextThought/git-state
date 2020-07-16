@@ -1,14 +1,12 @@
 # @nti/git-state
-**Forked from https://github.com/watson/git-state**
 
+**Forked from <https://github.com/watson/git-state>**
 
 Get the current state of any git repository.
 
-[![Build status](https://travis-ci.org/NextThought/git-state.svg?branch=master)](https://travis-ci.org/NextThought/git-state)
-
 ## Installation
 
-```
+```sh
 npm install @nti/git-state
 ```
 
@@ -34,6 +32,8 @@ git.isGit(path, function (exists) {
 ```
 
 ## API
+
+### --
 
 #### `isGit(path, callback)`
 
@@ -110,7 +110,7 @@ Supports the following `options`:
 
 #### `dirtySync(path[, options])`
 
-Synchronous version of `dirty() `.
+Synchronous version of `dirty()`.
 
 Can throw error. This typically happens if you are running a too old
 version of Node.js (< 0.12), if git isn't found or if the path isn't
@@ -137,7 +137,7 @@ Synchronous version of `branch()`. Returns null if no branch is set.
 
 #### `remoteBranch(path[, options], callback)`
 
-Get the remote for the currently checked out branch in the git 
+Get the remote for the currently checked out branch in the git
 repository at the given `path`.
 
 The `callback` will be called with two arguments: An optional error

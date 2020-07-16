@@ -12,12 +12,10 @@
     "type": "git",
     "url": "https://github.com/NextThought/git-state.git"
   },
-  "dependencies": {
-    "after-all-results": "^2.0.0"
-  },
+  "dependencies": {},
   "devDependencies": {
-    "standard": "^10.0.2",
-    "tape": "^4.4.0"
+    "standard": "^14.3.4",
+    "tape": "^4.4.0" 
   },
   "engines": {
     "node": ">=4.0.0"

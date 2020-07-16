@@ -1,0 +1,30 @@
+name: Project Health
+
+on:
+  push:
+    branches:
+      - master
+    
+  pull_request:
+    branches:
+      - master
+
+
+jobs:
+  Verify:
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: clone
+        uses: actions/checkout@v2
+
+      - name: setup nodejs
+        uses: actions/setup-node@v1
+        with:
+          node-version: "14.x"
+
+      - name: install dependencies
+        run: npm ci
+
+      - name: test
+        run: npm test

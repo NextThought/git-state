@@ -1,81 +1,84 @@
 'use strict'
-
-var fs = require('fs')
-var path = require('path')
-var exec = require('child_process').exec
-var execSync = require('child_process').execSync
-var afterAll = require('after-all-results')
+const fs = require('fs')
+const path = require('path')
+const { exec, execSync } = require('child_process')
+const { promisify } = require('util')
 
 // Prevent from failing on windows
-var nullPath = /^win/.test(process.platform) ? 'nul' : '/dev/null'
+const nullPath = /^win/.test(process.platform) ? 'nul' : '/dev/null'
 
 // Consider EOL as \n because either Windows or *nix, this escape char will be there
-var EOL = /\r?\n/
+const EOL = /\r?\n/
 
-exports.isGit = function isGit (dir, cb) {
+Object.assign(exports, {
+  ahead,
+  aheadSync,
+  behind,
+  behindSync,
+  branch,
+  branchSync,
+  check,
+  checkSync,
+  commit,
+  commitSync,
+  dirty,
+  dirtySync,
+  isGit,
+  isGitSync,
+  message,
+  messageSync,
+  remoteBranch,
+  remoteBranchSync,
+  stashes,
+  stashesSync,
+  status,
+  statusSync,
+  untracked,
+  untrackedSync
+})
+
+function isGit (dir, cb) {
   fs.stat(path.join(dir, '.git'), function (err) {
     cb(!err) // eslint-disable-line standard/no-callback-literal
   })
 }
 
-exports.isGitSync = function isGitSync (dir) {
+function isGitSync (dir) {
   return fs.existsSync(path.join(dir, '.git'))
 }
 
-exports.checkSync = function checkSync (repo, opts) {
-  var branch = exports.branchSync(repo, opts)
-  var remoteBranch = exports.remoteBranchSync(repo, opts)
-  var ahead = exports.aheadSync(repo, opts)
-  var behind = exports.behindSync(repo, opts)
-  var status = statusSync(repo, opts)
-  var stashes = exports.stashesSync(repo, opts)
-
+function checkSync (repo, opts) {
+  const { dirty, untracked } = statusSync(repo, opts)
   return {
-    branch: branch,
-    remoteBranch: remoteBranch,
-    ahead: ahead,
-    behind: behind,
-    dirty: status.dirty,
-    untracked: status.untracked,
-    stashes: stashes
+    branch: branchSync(repo, opts),
+    remoteBranch: remoteBranchSync(repo, opts),
+    ahead: aheadSync(repo, opts),
+    behind: behindSync(repo, opts),
+    dirty,
+    untracked,
+    stashes: stashesSync(repo, opts)
   }
 }
 
-exports.check = function check (repo, opts, cb) {
-  if (typeof opts === 'function') return exports.check(repo, {}, opts)
+function check (repo, opts, cb) {
+  if (typeof opts === 'function') return check(repo, {}, opts)
 
-  var next = afterAll(function (err, results) {
-    if (err) return cb(err)
-
-    var branch = results[0]
-    var remoteBranch = results[1]
-    var ahead = results[2]
-    var behind = results[3]
-    var stashes = results[4]
-    var status = results[5]
-
-    cb(null, {
-      branch: branch,
-      remoteBranch: remoteBranch,
-      ahead: ahead,
-      behind: behind,
-      dirty: status.dirty,
-      untracked: status.untracked,
-      stashes: stashes
-    })
-  })
-
-  exports.branch(repo, opts, next())
-  exports.remoteBranch(repo, opts, next())
-  exports.ahead(repo, opts, next())
-  exports.behind(repo, opts, next())
-  exports.stashes(repo, opts, next())
-
-  status(repo, opts, next())
+  Promise.all([
+    promisify(branch)(repo, opts),
+    promisify(remoteBranch)(repo, opts),
+    promisify(ahead)(repo, opts),
+    promisify(behind)(repo, opts),
+    promisify(stashes)(repo, opts),
+    promisify(status)(repo, opts)
+  ])
+    .then(
+      ([branch, remoteBranch, ahead, behind, stashes, { dirty, untracked }]) => cb(null, { branch, remoteBranch, ahead, behind, dirty, untracked, stashes }),
+      cb
+    )
 }
 
-exports.untracked = function untracked (repo, opts, cb) {
-  if (typeof opts === 'function') return exports.untracked(repo, {}, opts)
+function untracked (repo, opts, cb) {
+  if (typeof opts === 'function') return untracked(repo, {}, opts)
 
   status(repo, opts, function (err, result) {
     if (err) return cb(err)
@@ -83,8 +86,8 @@ exports.untracked = function untracked (repo, opts, cb) {
   })
 }
 
-exports.dirty = function dirty (repo, opts, cb) {
-  if (typeof opts === 'function') return exports.dirty(repo, {}, opts)
+function dirty (repo, opts, cb) {
+  if (typeof opts === 'function') return dirty(repo, {}, opts)
 
   status(repo, opts, function (err, result) {
     if (err) return cb(err)
@@ -92,11 +95,11 @@ exports.dirty = function dirty (repo, opts, cb) {
   })
 }
 
-exports.branch = function branch (repo, opts, cb) {
-  if (typeof opts === 'function') return exports.branch(repo, {}, opts)
+function branch (repo, opts, cb) {
+  if (typeof opts === 'function') return branch(repo, {}, opts)
   opts = opts || {}
 
-  exec('git show-ref >' + nullPath + ' 2>&1 && git rev-parse --abbrev-ref HEAD', {cwd: repo, maxBuffer: opts.maxBuffer}, function (err, stdout, stderr) {
+  exec('git show-ref >' + nullPath + ' 2>&1 && git rev-parse --abbrev-ref HEAD', { cwd: repo, maxBuffer: opts.maxBuffer }, function (err, stdout, stderr) {
     if (err) {
       if (err.code === 'ERR_CHILD_PROCESS_STDIO_MAXBUFFER') return cb(err)
       if (err.message === 'stdout maxBuffer exceeded') return cb(err)
@@ -106,11 +109,11 @@ exports.branch = function branch (repo, opts, cb) {
   })
 }
 
-exports.remoteBranch = function branch (repo, opts, cb) {
-  if (typeof opts === 'function') return exports.remoteBranch(repo, {}, opts)
+function remoteBranch (repo, opts, cb) {
+  if (typeof opts === 'function') return remoteBranch(repo, {}, opts)
   opts = opts || {}
 
-  exec('git show-ref >' + nullPath + ' 2>&1 && git rev-parse --abbrev-ref --symbolic-full-name @{u}', {cwd: repo, maxBuffer: opts.maxBuffer}, function (err, stdout, stderr) {
+  exec('git show-ref >' + nullPath + ' 2>&1 && git rev-parse --abbrev-ref --symbolic-full-name @{u}', { cwd: repo, maxBuffer: opts.maxBuffer }, function (err, stdout, stderr) {
     if (err) {
       if (err.message === 'stdout maxBuffer exceeded') return cb(err)
       return cb() // most likely the git repo doesn't have any commits yet
@@ -119,11 +122,11 @@ exports.remoteBranch = function branch (repo, opts, cb) {
   })
 }
 
-exports.ahead = function ahead (repo, opts, cb) {
-  if (typeof opts === 'function') return exports.ahead(repo, {}, opts)
+function ahead (repo, opts, cb) {
+  if (typeof opts === 'function') return ahead(repo, {}, opts)
   opts = opts || {}
 
-  exec('git show-ref >' + nullPath + ' 2>&1 && git rev-list HEAD --not --remotes', {cwd: repo, maxBuffer: opts.maxBuffer}, function (err, stdout, stderr) {
+  exec('git show-ref >' + nullPath + ' 2>&1 && git rev-list HEAD --not --remotes', { cwd: repo, maxBuffer: opts.maxBuffer }, function (err, stdout, stderr) {
     if (err) {
       if (err.message === 'stdout maxBuffer exceeded') return cb(err)
       return cb(null, NaN) // depending on the state of the git repo, the command might return non-0 exit code
@@ -133,13 +136,13 @@ exports.ahead = function ahead (repo, opts, cb) {
   })
 }
 
-exports.behind = function ahead (repo, opts, cb) {
-  if (typeof opts === 'function') return exports.behind(repo, {}, opts)
+function behind (repo, opts, cb) {
+  if (typeof opts === 'function') return behind(repo, {}, opts)
   opts = opts || {}
-  exports.remoteBranch(repo, opts, function (er, remote) {
+  remoteBranch(repo, opts, function (er, remote) {
     if (er) return cb(er)
 
-    exec('git show-ref >' + nullPath + ' 2>&1 && git rev-list HEAD..' + remote, {cwd: repo, maxBuffer: opts.maxBuffer}, function (err, stdout, stderr) {
+    exec('git show-ref >' + nullPath + ' 2>&1 && git rev-list HEAD..' + remote, { cwd: repo, maxBuffer: opts.maxBuffer }, function (err, stdout, stderr) {
       if (err) {
         if (err.message === 'stdout maxBuffer exceeded') return cb(err)
         return cb(null, NaN) // depending on the state of the git repo, the command might return non-0 exit code
@@ -152,10 +155,10 @@ exports.behind = function ahead (repo, opts, cb) {
 
 function status (repo, opts, cb) {
   opts = opts || {}
-  exec('git status -s', {cwd: repo, maxBuffer: opts.maxBuffer}, function (err, stdout, stderr) {
+  exec('git status -s', { cwd: repo, maxBuffer: opts.maxBuffer }, function (err, stdout, stderr) {
     if (err) return cb(err)
-    var status = { dirty: 0, untracked: 0 }
-    stdout.trim().split(EOL).filter(truthy).forEach(function (file) {
+    const status = { dirty: 0, untracked: 0 }
+    stdout.trim().split(EOL).filter(Boolean).forEach(function (file) {
       if (file.substr(0, 2) === '??') status.untracked++
       else status.dirty++
     })
@@ -163,55 +166,51 @@ function status (repo, opts, cb) {
   })
 }
 
-function truthy (obj) {
-  return !!obj
-}
-
-exports.commit = function commit (repo, opts, cb) {
-  if (typeof opts === 'function') return exports.commit(repo, {}, opts)
+function commit (repo, opts, cb) {
+  if (typeof opts === 'function') return commit(repo, {}, opts)
   opts = opts || {}
 
-  exec('git rev-parse --short HEAD', {cwd: repo, maxBuffer: opts.maxBuffer}, function (err, stdout, stderr) {
+  exec('git rev-parse --short HEAD', { cwd: repo, maxBuffer: opts.maxBuffer }, function (err, stdout, stderr) {
     if (err) return cb(err)
-    var commitHash = stdout.trim()
+    const commitHash = stdout.trim()
     cb(null, commitHash)
   })
 }
 
-exports.stashes = function stashes (repo, opts, cb) {
-  if (typeof opts === 'function') return exports.stashes(repo, {}, opts)
+function stashes (repo, opts, cb) {
+  if (typeof opts === 'function') return stashes(repo, {}, opts)
   opts = opts || {}
 
-  exec('git stash list', {cwd: repo, maxBuffer: opts.maxBuffer}, function (err, stdout, stderr) {
+  exec('git stash list', { cwd: repo, maxBuffer: opts.maxBuffer }, function (err, stdout, stderr) {
     if (err) return cb(err)
-    var stashes = stdout.trim().split(EOL).filter(truthy)
+    const stashes = stdout.trim().split(EOL).filter(Boolean)
     cb(null, stashes.length)
   })
 }
 
-exports.message = function message (repo, opts, cb) {
-  if (typeof opts === 'function') return exports.message(repo, {}, opts)
+function message (repo, opts, cb) {
+  if (typeof opts === 'function') return message(repo, {}, opts)
   opts = opts || {}
 
-  exec('git log -1 --pretty=%B', {cwd: repo, maxBuffer: opts.maxBuffer}, function (err, stdout, stderr) {
+  exec('git log -1 --pretty=%B', { cwd: repo, maxBuffer: opts.maxBuffer }, function (err, stdout, stderr) {
     if (err) return cb(err)
     cb(null, stdout.toString().trim())
   })
 }
 
 //* SYNC methods *//
-exports.untrackedSync = function untrackedSync (repo, opts) {
+function untrackedSync (repo, opts) {
   return statusSync(repo, opts).untracked
 }
 
-exports.dirtySync = function dirtySync (repo, opts) {
+function dirtySync (repo, opts) {
   return statusSync(repo, opts).dirty
 }
 
-exports.branchSync = function branchSync (repo, opts) {
+function branchSync (repo, opts) {
   opts = opts || {}
   try {
-    var stdout = execSync('git show-ref >' + nullPath + ' 2>&1 && git rev-parse --abbrev-ref HEAD', {cwd: repo, maxBuffer: opts.maxBuffer}).toString()
+    const stdout = execSync('git show-ref >' + nullPath + ' 2>&1 && git rev-parse --abbrev-ref HEAD', { cwd: repo, maxBuffer: opts.maxBuffer }).toString()
     return stdout.trim()
   } catch (err) {
     if (err.code === 'ENOBUFS') throw err
@@ -219,10 +218,10 @@ exports.branchSync = function branchSync (repo, opts) {
   }
 }
 
-exports.remoteBranchSync = function branchSync (repo, opts) {
+function remoteBranchSync (repo, opts) {
   opts = opts || {}
   try {
-    var stdout = execSync('git show-ref >' + nullPath + ' 2>&1 && git rev-parse --abbrev-ref --symbolic-full-name @{u} 2> ' + nullPath, {cwd: repo, maxBuffer: opts.maxBuffer}).toString()
+    const stdout = execSync('git show-ref >' + nullPath + ' 2>&1 && git rev-parse --abbrev-ref --symbolic-full-name @{u} 2> ' + nullPath, { cwd: repo, maxBuffer: opts.maxBuffer }).toString()
     return stdout.trim()
   } catch (err) {
     if (err.code === 'ENOBUFS') throw err
@@ -230,10 +229,10 @@ exports.remoteBranchSync = function branchSync (repo, opts) {
   }
 }
 
-exports.aheadSync = function aheadSync (repo, opts) {
+function aheadSync (repo, opts) {
   opts = opts || {}
   try {
-    var stdout = execSync('git show-ref >' + nullPath + ' 2>&1 && git rev-list HEAD --not --remotes', {cwd: repo, maxBuffer: opts.maxBuffer}).toString()
+    let stdout = execSync('git show-ref >' + nullPath + ' 2>&1 && git rev-list HEAD --not --remotes', { cwd: repo, maxBuffer: opts.maxBuffer }).toString()
     stdout = stdout.trim()
     return !stdout ? 0 : parseInt(stdout.split(EOL).length, 10)
   } catch (err) {
@@ -242,11 +241,11 @@ exports.aheadSync = function aheadSync (repo, opts) {
   }
 }
 
-exports.behindSync = function aheadSync (repo, opts) {
+function behindSync (repo, opts) {
   opts = opts || {}
   try {
-    var remote = exports.remoteBranchSync(repo, opts)
-    var stdout = execSync('git show-ref >' + nullPath + ' 2>&1 && git rev-list HEAD..' + remote + ' 2> ' + nullPath, {cwd: repo, maxBuffer: opts.maxBuffer}).toString()
+    const remote = remoteBranchSync(repo, opts)
+    let stdout = execSync('git show-ref >' + nullPath + ' 2>&1 && git rev-list HEAD..' + remote + ' 2> ' + nullPath, { cwd: repo, maxBuffer: opts.maxBuffer }).toString()
     stdout = stdout.trim()
     return !stdout ? 0 : parseInt(stdout.split(EOL).length, 10)
   } catch (err) {
@@ -256,11 +255,11 @@ exports.behindSync = function aheadSync (repo, opts) {
 }
 
 // Throws error
-var statusSync = function statusSync (repo, opts) {
+function statusSync (repo, opts) {
   opts = opts || {}
-  var stdout = execSync('git status -s', {cwd: repo, maxBuffer: opts.maxBuffer}).toString()
-  var status = { dirty: 0, untracked: 0 }
-  stdout.trim().split(EOL).filter(truthy).forEach(function (file) {
+  const stdout = execSync('git status -s', { cwd: repo, maxBuffer: opts.maxBuffer }).toString()
+  const status = { dirty: 0, untracked: 0 }
+  stdout.trim().split(EOL).filter(Boolean).forEach(function (file) {
     if (file.substr(0, 2) === '??') status.untracked++
     else status.dirty++
   })
@@ -268,23 +267,23 @@ var statusSync = function statusSync (repo, opts) {
 }
 
 // Throws error
-exports.commitSync = function commitSync (repo, opts) {
+function commitSync (repo, opts) {
   opts = opts || {}
-  var stdout = execSync('git rev-parse --short HEAD', {cwd: repo, maxBuffer: opts.maxBuffer}).toString()
-  var commitHash = stdout.trim()
+  const stdout = execSync('git rev-parse --short HEAD', { cwd: repo, maxBuffer: opts.maxBuffer }).toString()
+  const commitHash = stdout.trim()
   return commitHash
 }
 
 // Throws error
-exports.stashesSync = function stashesSync (repo, opts) {
+function stashesSync (repo, opts) {
   opts = opts || {}
-  var stdout = execSync('git stash list', {cwd: repo, maxBuffer: opts.maxBuffer}).toString()
-  var stashes = stdout.trim().split(EOL).filter(truthy)
+  const stdout = execSync('git stash list', { cwd: repo, maxBuffer: opts.maxBuffer }).toString()
+  const stashes = stdout.trim().split(EOL).filter(Boolean)
   return stashes.length
 }
 
 // Throws error
-exports.messageSync = function messageSync (repo, opts) {
+function messageSync (repo, opts) {
   opts = opts || {}
-  return execSync('git log -1 --pretty=%B', {cwd: repo, maxBuffer: opts.maxBuffer}).toString().trim()
+  return execSync('git log -1 --pretty=%B', { cwd: repo, maxBuffer: opts.maxBuffer }).toString().trim()
 }

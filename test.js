@@ -49,7 +49,7 @@ test('#check()', function (t) {
 
 test('#check() with maxBuffer', function (t) {
   var dir = process.cwd()
-  git.check(dir, {maxBuffer: 1}, testMaxBuffer(t))
+  git.check(dir, { maxBuffer: 1 }, testMaxBuffer(t))
 })
 
 test('#checkSync()', function (t) {
@@ -77,7 +77,7 @@ test('#checkSync()', function (t) {
 test('#checkSync() with maxBuffer', function (t) {
   var dir = process.cwd()
   t.throws(function () {
-    git.checkSync(dir, {maxBuffer: 1})
+    git.checkSync(dir, { maxBuffer: 1 })
   }, /ENOBUFS/)
   t.end()
 })
@@ -93,7 +93,7 @@ test('#untracked()', function (t) {
 
 test('#untracked() with maxBuffer', function (t) {
   var dir = process.cwd()
-  git.untracked(dir, {maxBuffer: 1}, testMaxBuffer(t))
+  git.untracked(dir, { maxBuffer: 1 }, testMaxBuffer(t))
 })
 
 test('#untrackedSync()', function (t) {
@@ -110,7 +110,7 @@ test('#untrackedSync()', function (t) {
 test('#untrackedSync() with maxBuffer', function (t) {
   var dir = process.cwd()
   t.throws(function () {
-    git.untrackedSync(dir, {maxBuffer: 1})
+    git.untrackedSync(dir, { maxBuffer: 1 })
   }, /ENOBUFS/)
   t.end()
 })
@@ -126,7 +126,7 @@ test('#dirty()', function (t) {
 
 test('#dirty() with maxBuffer', function (t) {
   var dir = process.cwd()
-  git.dirty(dir, {maxBuffer: 1}, testMaxBuffer(t))
+  git.dirty(dir, { maxBuffer: 1 }, testMaxBuffer(t))
 })
 
 test('#dirtySync()', function (t) {
@@ -143,7 +143,7 @@ test('#dirtySync()', function (t) {
 test('#dirtySync() with maxBuffer', function (t) {
   var dir = process.cwd()
   t.throws(function () {
-    git.dirtySync(dir, {maxBuffer: 1})
+    git.dirtySync(dir, { maxBuffer: 1 })
   }, /ENOBUFS/)
   t.end()
 })
@@ -159,7 +159,7 @@ test('#branch()', function (t) {
 
 test('#branch() with maxBuffer', function (t) {
   var dir = process.cwd()
-  git.branch(dir, {maxBuffer: 1}, testMaxBuffer(t))
+  git.branch(dir, { maxBuffer: 1 }, testMaxBuffer(t))
 })
 
 test('#branchSync()', function (t) {
@@ -176,7 +176,7 @@ test('#branchSync()', function (t) {
 test('#branchSync() with maxBuffer', function (t) {
   var dir = process.cwd()
   t.throws(function () {
-    git.branchSync(dir, {maxBuffer: 1})
+    git.branchSync(dir, { maxBuffer: 1 })
   }, /ENOBUFS/)
   t.end()
 })
@@ -305,7 +305,7 @@ test('#commit()', function (t) {
 
 test('#commit() with maxBuffer', function (t) {
   var dir = process.cwd()
-  git.commit(dir, {maxBuffer: 1}, testMaxBuffer(t))
+  git.commit(dir, { maxBuffer: 1 }, testMaxBuffer(t))
 })
 
 test('#commitSync()', function (t) {
@@ -322,7 +322,7 @@ test('#commitSync()', function (t) {
 test('#commitSync() with maxBuffer', function (t) {
   var dir = process.cwd()
   t.throws(function () {
-    git.commitSync(dir, {maxBuffer: 1})
+    git.commitSync(dir, { maxBuffer: 1 })
   }, /ENOBUFS/)
   t.end()
 })

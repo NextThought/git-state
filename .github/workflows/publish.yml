@@ -1,0 +1,33 @@
+name: Publish
+
+on:
+  push:
+    tags:
+    - 'v[0-9]+*'
+
+
+jobs:
+  Verify:
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: clone
+        uses: actions/checkout@v2
+
+      - name: setup nodejs
+        uses: actions/setup-node@v1
+        with:
+          node-version: "14.x"
+
+      - name: configure npm
+        env:
+          NPM_REGISTRY: ${{ secrets.NPM_REGISTRY }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          npm config set loglevel error
+          npm config set progress false
+          npm config set '@nti:registry' "$NPM_REGISTRY"
+          npm config set "${NPM_REGISTRY/https:/}/:_authToken" "$NPM_TOKEN"
+
+      - name: publish
+        run: npm publish
